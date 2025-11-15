@@ -1,0 +1,228 @@
+<!-- src/app/admin/dashboard/dashboard.component.html -->
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Admin Dashboard - All Tickets</h2>
+    <button class="btn btn-outline-primary" (click)="loadAllTickets()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
+        <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+        <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+      </svg>
+      Refresh
+    </button>
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+    {{ successMessage }}
+    <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+    {{ errorMessage }}
+    <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading tickets...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!isLoading && tickets.length === 0" class="text-center py-5">
+    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-inbox text-muted mb-3" viewBox="0 0 16 16">
+      <path d="M4.98 4a.5.5 0 0 0-.39.188L1.54 8H6a.5.5 0 0 1 .5.5 1.5 1.5 0 1 0 3 0A.5.5 0 0 1 10 8h4.46l-3.05-3.812A.5.5 0 0 0 11.02 4H4.98zm9.954 5H10.45a2.5 2.5 0 0 1-4.9 0H1.066l.32 2.562a.5.5 0 0 0 .497.438h12.234a.5.5 0 0 0 .496-.438L14.933 9zM3.809 3.563A1.5 1.5 0 0 1 4.981 3h6.038a1.5 1.5 0 0 1 1.172.563l3.7 4.625a.5.5 0 0 1 .106.374l-.39 3.124A1.5 1.5 0 0 1 14.117 13H1.883a1.5 1.5 0 0 1-1.489-1.314l-.39-3.124a.5.5 0 0 1 .106-.374l3.7-4.625z"/>
+    </svg>
+    <h4>No tickets in the system</h4>
+    <p class="text-muted">Waiting for users to create tickets</p>
+  </div>
+
+  <!-- Tickets Table -->
+  <div *ngIf="!isLoading && tickets.length > 0" class="table-responsive">
+    <table class="table table-hover">
+      <thead class="table-light">
+        <tr>
+          <th>ID</th>
+          <th>Title</th>
+          <th>Description</th>
+          <th>Priority</th>
+          <th>Status</th>
+          <th>User ID</th>
+          <th>Created</th>
+          <th>Process</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let ticket of tickets">
+          <td>{{ ticket.id }}</td>
+          <td>{{ ticket.title }}</td>
+          <td>
+            <span [title]="ticket.description">
+              {{ ticket.description.length > 50 ? ticket.description.substring(0, 50) + '...' : ticket.description }}
+            </span>
+          </td>
+          <td>
+            <span [ngClass]="getPriorityBadgeClass(ticket.priority)">
+              {{ ticket.priority }}
+            </span>
+          </td>
+          <td>
+            <span [ngClass]="getStatusBadgeClass(ticket.status)">
+              {{ ticket.status }}
+            </span>
+          </td>
+          <td>{{ ticket.userId }}</td>
+          <td>{{ formatDate(ticket.createdAt) }}</td>
+          <td>
+            <button 
+              *ngIf="showGearIcon(ticket)"
+              class="btn btn-sm btn-outline-secondary"
+              (click)="openProcessModal(ticket)"
+              title="Process ticket"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16">
+                <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
+                <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319z"/>
+              </svg>
+            </button>
+            <span *ngIf="!showGearIcon(ticket)" class="text-muted">
+              <small>-</small>
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Process Ticket Modal -->
+<div class="modal" [class.show]="showProcessModal" [style.display]="showProcessModal ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Process Ticket #{{ processingTicket?.id }}</h5>
+        <button type="button" class="btn-close" (click)="closeProcessModal()"></button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="processingTicket" class="ticket-details">
+          <!-- Ticket Information -->
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <strong>Title:</strong>
+              <p>{{ processingTicket.title }}</p>
+            </div>
+            <div class="col-md-6">
+              <strong>Current Status:</strong>
+              <p>
+                <span [ngClass]="getStatusBadgeClass(processingTicket.status)">
+                  {{ processingTicket.status }}
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <strong>Priority:</strong>
+              <p>
+                <span [ngClass]="getPriorityBadgeClass(processingTicket.priority)">
+                  {{ processingTicket.priority }}
+                </span>
+              </p>
+            </div>
+            <div class="col-md-6">
+              <strong>User ID:</strong>
+              <p>{{ processingTicket.userId }}</p>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-12">
+              <strong>Description:</strong>
+              <p class="border p-3 bg-light rounded">{{ processingTicket.description }}</p>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <strong>Created At:</strong>
+              <p>{{ formatDate(processingTicket.createdAt) }}</p>
+            </div>
+            <div class="col-md-6" *ngIf="processingTicket.updatedAt">
+              <strong>Updated At:</strong>
+              <p>{{ formatDate(processingTicket.updatedAt) }}</p>
+            </div>
+          </div>
+
+          <!-- Status Update Actions -->
+          <hr class="my-4">
+          
+          <div class="alert alert-info">
+            <strong>Actions:</strong>
+            <p class="mb-0" *ngIf="canApproveOrReject(processingTicket)">
+              This ticket is awaiting your decision. You can approve it to start processing or reject it.
+            </p>
+            <p class="mb-0" *ngIf="canClose(processingTicket)">
+              This ticket is currently open. You can close it when the issue is resolved.
+            </p>
+          </div>
+
+          <!-- Requested Status: Show Approve and Reject buttons -->
+          <div *ngIf="canApproveOrReject(processingTicket)" class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <button 
+              class="btn btn-primary px-4" 
+              (click)="approveTicket()"
+              [disabled]="isProcessing"
+            >
+              <span *ngIf="isProcessing" class="spinner-border spinner-border-sm me-2"></span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle me-1" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+              </svg>
+              Approve (Open)
+            </button>
+            <button 
+              class="btn btn-danger px-4" 
+              (click)="rejectTicket()"
+              [disabled]="isProcessing"
+            >
+              <span *ngIf="isProcessing" class="spinner-border spinner-border-sm me-2"></span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle me-1" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+              </svg>
+              Reject
+            </button>
+          </div>
+
+          <!-- Open Status: Show Close button -->
+          <div *ngIf="canClose(processingTicket)" class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <button 
+              class="btn btn-secondary px-4" 
+              (click)="closeTicket()"
+              [disabled]="isProcessing"
+            >
+              <span *ngIf="isProcessing" class="spinner-border spinner-border-sm me-2"></span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2-square me-1" viewBox="0 0 16 16">
+                <path d="M3 14.5A1.5 1.5 0 0 1 1.5 13V3A1.5 1.5 0 0 1 3 1.5h8a.5.5 0 0 1 0 1H3a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5h10a.5.5 0 0 0 .5-.5V8a.5.5 0 0 1 1 0v5a1.5 1.5 0 0 1-1.5 1.5H3z"/>
+                <path d="m8.354 10.354 7-7a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0z"/>
+              </svg>
+              Close Ticket
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" (click)="closeProcessModal()" [disabled]="isProcessing">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal backdrop -->
+<div class="modal-backdrop fade" [class.show]="showProcessModal" *ngIf="showProcessModal"></div>

@@ -1,0 +1,229 @@
+<!-- src/app/customer/dashboard/dashboard.component.html -->
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>My Tickets</h2>
+    <button class="btn btn-primary" (click)="openCreateModal()">
+      <i class="bi bi-plus-circle"></i> Create New Ticket
+    </button>
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+    {{ successMessage }}
+    <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+    {{ errorMessage }}
+    <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading tickets...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!isLoading && tickets.length === 0" class="text-center py-5">
+    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-inbox text-muted mb-3" viewBox="0 0 16 16">
+      <path d="M4.98 4a.5.5 0 0 0-.39.188L1.54 8H6a.5.5 0 0 1 .5.5 1.5 1.5 0 1 0 3 0A.5.5 0 0 1 10 8h4.46l-3.05-3.812A.5.5 0 0 0 11.02 4H4.98zm9.954 5H10.45a2.5 2.5 0 0 1-4.9 0H1.066l.32 2.562a.5.5 0 0 0 .497.438h12.234a.5.5 0 0 0 .496-.438L14.933 9zM3.809 3.563A1.5 1.5 0 0 1 4.981 3h6.038a1.5 1.5 0 0 1 1.172.563l3.7 4.625a.5.5 0 0 1 .106.374l-.39 3.124A1.5 1.5 0 0 1 14.117 13H1.883a1.5 1.5 0 0 1-1.489-1.314l-.39-3.124a.5.5 0 0 1 .106-.374l3.7-4.625z"/>
+    </svg>
+    <h4>No tickets yet</h4>
+    <p class="text-muted">Create your first ticket to get started</p>
+    <button class="btn btn-primary mt-2" (click)="openCreateModal()">Create Ticket</button>
+  </div>
+
+  <!-- Tickets Table -->
+  <div *ngIf="!isLoading && tickets.length > 0" class="table-responsive">
+    <table class="table table-hover">
+      <thead class="table-light">
+        <tr>
+          <th>Title</th>
+          <th>Description</th>
+          <th>Priority</th>
+          <th>Status</th>
+          <th>Created Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let ticket of tickets">
+          <td>{{ ticket.title }}</td>
+          <td>
+            <span [title]="ticket.description">
+              {{ ticket.description.length > 50 ? ticket.description.substring(0, 50) + '...' : ticket.description }}
+            </span>
+          </td>
+          <td>
+            <span [ngClass]="getPriorityBadgeClass(ticket.priority)">
+              {{ ticket.priority }}
+            </span>
+          </td>
+          <td>
+            <span [ngClass]="getStatusBadgeClass(ticket.status)">
+              {{ ticket.status }}
+            </span>
+          </td>
+          <td>{{ formatDate(ticket.createdAt) }}</td>
+          <td>
+            <button 
+              class="btn btn-sm btn-outline-primary"
+              (click)="openEditModal(ticket)"
+              [disabled]="!canEdit(ticket)"
+              [title]="canEdit(ticket) ? 'Edit ticket' : 'Can only edit tickets with Requested status'"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
+                <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+              </svg>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Create Ticket Modal -->
+<div class="modal" [class.show]="showCreateModal" [style.display]="showCreateModal ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Create New Ticket</h5>
+        <button type="button" class="btn-close" (click)="closeCreateModal()"></button>
+      </div>
+      <form (ngSubmit)="createTicket()" #createForm="ngForm">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="createTitle" class="form-label">Title *</label>
+            <input
+              type="text"
+              class="form-control"
+              id="createTitle"
+              name="title"
+              [(ngModel)]="newTicket.title"
+              required
+              [disabled]="isCreating"
+            />
+          </div>
+
+          <div class="mb-3">
+            <label for="createDescription" class="form-label">Description *</label>
+            <textarea
+              class="form-control"
+              id="createDescription"
+              name="description"
+              rows="4"
+              [(ngModel)]="newTicket.description"
+              required
+              [disabled]="isCreating"
+            ></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="createPriority" class="form-label">Priority *</label>
+            <select
+              class="form-select"
+              id="createPriority"
+              name="priority"
+              [(ngModel)]="newTicket.priority"
+              required
+              [disabled]="isCreating"
+            >
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeCreateModal()" [disabled]="isCreating">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="!createForm.valid || isCreating">
+            <span *ngIf="isCreating" class="spinner-border spinner-border-sm me-2"></span>
+            {{ isCreating ? 'Creating...' : 'Create Ticket' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Ticket Modal -->
+<div class="modal" [class.show]="showEditModal" [style.display]="showEditModal ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Ticket #{{ editingTicket?.id }}</h5>
+        <button type="button" class="btn-close" (click)="closeEditModal()"></button>
+      </div>
+      <form (ngSubmit)="updateTicket()" #editForm="ngForm">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="editTitle" class="form-label">Title *</label>
+            <input
+              type="text"
+              class="form-control"
+              id="editTitle"
+              name="title"
+              [(ngModel)]="editTicketData.title"
+              required
+              [disabled]="isUpdating"
+            />
+          </div>
+
+          <div class="mb-3">
+            <label for="editDescription" class="form-label">Description *</label>
+            <textarea
+              class="form-control"
+              id="editDescription"
+              name="description"
+              rows="4"
+              [(ngModel)]="editTicketData.description"
+              required
+              [disabled]="isUpdating"
+            ></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="editPriority" class="form-label">Priority *</label>
+            <select
+              class="form-select"
+              id="editPriority"
+              name="priority"
+              [(ngModel)]="editTicketData.priority"
+              required
+              [disabled]="isUpdating"
+            >
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+            </select>
+          </div>
+
+          <div class="alert alert-info">
+            <small>
+              <strong>Note:</strong> You can only edit tickets with "Requested" status.
+            </small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeEditModal()" [disabled]="isUpdating">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="!editForm.valid || isUpdating">
+            <span *ngIf="isUpdating" class="spinner-border spinner-border-sm me-2"></span>
+            {{ isUpdating ? 'Updating...' : 'Update Ticket' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal backdrop -->
+<div class="modal-backdrop fade" [class.show]="showCreateModal || showEditModal" *ngIf="showCreateModal || showEditModal"></div>
