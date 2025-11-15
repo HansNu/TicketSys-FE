@@ -1,59 +1,91 @@
-# TicketSysFE
+# Ticketing System - Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.10.
+## 🚀 Features
 
-## Development server
+- **User Authentication** - Login and registration with JWT token management
+- **Role-Based Dashboards** - Separate interfaces for Users and Admins
+- **Customer Features**
+  - Create new tickets
+  - View personal tickets
+  - Edit tickets (only when status = "Requested")
+  - Real-time status updates
+- **Admin Features**
+  - View all tickets from all users
+  - Approve/Reject requested tickets
+  - Close open tickets
+  - Process tickets with status workflow
 
-To start a local development server, run:
+## 📋 Prerequisites
+
+- [Node.js](https://nodejs.org/) (v18 or higher)
+- [Angular CLI](https://angular.io/cli) (v18)
+- Code editor (VS Code recommended)
+
+## ⚙️ Installation & Setup
+
+### 1. Clone the Repository
+
+```bash
+git clone <repository-url>
+cd ticketing-system  # or your frontend folder name
+```
+
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+### 3. Configure API Endpoint
+
+Update the API URL in service files to match your backend:
+
+**src/app/services/auth.service.ts:**
+```typescript
+private apiUrl = 'http://localhost:5004/api/Auth';  // Change port if needed
+```
+
+**src/app/services/ticket.service.ts:**
+```typescript
+private apiUrl = 'http://localhost:5004/api/Tickets';  // Change port if needed
+```
+
+### 4. Run Development Server
 
 ```bash
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Navigate to `http://localhost:4200` in your browser.
 
-## Code scaffolding
+## 🎯 Usage
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+### First Time Setup
 
-```bash
-ng generate component component-name
-```
+1. **Start the backend API** first (ensure it's running on `http://localhost:5004`)
+2. **Start the frontend** with `ng serve`
+3. **Open browser** to `http://localhost:4200`
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+### Login Credentials (Seeded Accounts)
 
-```bash
-ng generate --help
-```
+| Email | Password | Role | Access |
+|-------|----------|------|--------|
+| admin@test.com | Admin123! | Admin | Full access to all tickets |
+| customer@test.com | User123! | User | Access to own tickets only |
 
-## Building
+### User Flow
 
-To build the project run:
+1. **Login** - Navigate to login page (User can't register new accounts, user accounts will be given by admins)
+2. **Create Ticket** - Click "Create New Ticket" button
+3. **Fill Details** - Title, description, priority
+4. **View Tickets** - See your tickets in the dashboard table
+5. **Edit Ticket** - Click pencil icon (only if status = "Requested")
+6. **Track Status** - See status update
 
-```bash
-ng build
-```
+### Admin Flow
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+1. **Login/Register New Account as Admin** - Use admin@test.com
+2. **View All Tickets** - See tickets from all users
+3. **Process Requested Tickets** - Click gear icon
+4. **Approve or Reject** - Click "Approve (Open)" or "Reject"
+5. **Close Tickets** - Click gear icon on "Open" tickets → "Close Ticket"
